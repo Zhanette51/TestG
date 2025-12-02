@@ -327,7 +327,7 @@ function update() {
         if (score === gifts.length) {
             gameWin = true;
         } else {
-            messageElement.textContent = "Собери все подарки сначала!";
+            messageElement.textContent = "Сначала собери все подарки!";
             messageElement.style.display = 'block';
             setTimeout(() => {
                 messageElement.style.display = 'none';
@@ -447,7 +447,7 @@ function loseLife() {
     
     if (player.lives <= 0) {
         gameOver = true;
-        showMessage("Попробуй ещё раз, мама верит в тебя! 💪");
+        showMessage("Попробуй ещё раз, я верю в тебя! 💪");
     } else {
         player.invincible = true;
         player.invincibleTimer = 120; // 2 секунды
@@ -466,8 +466,8 @@ function loseLife() {
 function showWinMessage() {
     const messages = [
         "🎊 ТЫ СУПЕР-МАМА! 🎊",
-        "С Юбилеем, родная!",
-        "Ты собрала все подарки!",
+        "...",
+        "...",
         "Мы тебя очень любим! 💖"
     ];
     
