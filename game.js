@@ -25,6 +25,20 @@ const messageElement = document.getElementById('message');
 const loadingElement = document.getElementById('loading');
 const restartButton = document.getElementById('restartButton');
 
+// Массив приятных сообщений для каждого подарка
+const giftMessages = [
+    "Самая добрая! 💖",
+    "Самая красивая! 🌸",
+    "Всегда поддерживаешь! 🤗",
+    "Мой главный пример! 👑",
+    "Мы тебя очень любим! ❤️",
+    "Ты делаешь мир лучше! ✨",
+    "Твоя улыбка - солнце! ☀️",
+    "Самая мудрая! 🦉",
+    "Твои объятия - дом! 🏡",
+    "Вдохновляешь меня! 🎯"
+];
+
 // Инициализируем объект для спрайтов
 const sprites = {};
 
@@ -187,6 +201,7 @@ let gameOver = false;
 let gameWin = false;
 const keys = {};
 const particles = [];
+let floatingMessages = [];
 
 // ===================== УПРАВЛЕНИЕ =====================
 document.addEventListener('keydown', (e) => {
@@ -224,6 +239,7 @@ function initGame() {
     scoreElement.textContent = score;
     livesElement.textContent = '❤️'.repeat(player.lives);
     messageElement.style.display = 'none';
+    floatingMessages = [];
     
     gameLoop();
 }
@@ -292,7 +308,7 @@ function update() {
     });
     
     // Сбор подарков
-    gifts.forEach(gift => {
+    gifts.forEach((gift, index) => {
         if (!gift.collected &&
             player.x < gift.x + gift.width &&
             player.x + player.width > gift.x &&
@@ -305,6 +321,13 @@ function update() {
             
             // Эффект сбора
             createParticles(gift.x + gift.width/2, gift.y + gift.height/2, 10, '#e74c3c');
+            
+            // Показываем приятное сообщение
+            showFloatingMessage(
+                giftMessages[index % giftMessages.length], 
+                gift.x + gift.width/2, 
+                gift.y
+            );
             
             if (score === gifts.length) {
                 messageElement.textContent = "🎁 Все подарки собраны! К флагу! 🎁";
@@ -349,6 +372,14 @@ function update() {
         particles[i].update();
         if (particles[i].life <= 0) {
             particles.splice(i, 1);
+        }
+    }
+    
+    // Обновление плавающих сообщений
+    for (let i = floatingMessages.length - 1; i >= 0; i--) {
+        floatingMessages[i].update();
+        if (floatingMessages[i].life <= 0) {
+            floatingMessages.splice(i, 1);
         }
     }
 }
@@ -424,6 +455,11 @@ function draw() {
         particle.draw(ctx);
     });
     
+    // Плавающие сообщения
+    floatingMessages.forEach(message => {
+        message.draw(ctx);
+    });
+    
     // Анимация флага при достижении
     if (flag.reached) {
         ctx.save();
@@ -466,8 +502,8 @@ function loseLife() {
 function showWinMessage() {
     const messages = [
         "🎊 ТЫ СУПЕР-МАМА! 🎊",
-        "...",
-        "...",
+        "С Юбилеем!",
+        "Ты собрала все подарки!",
         "Мы тебя очень любим! 💖"
     ];
     
@@ -495,6 +531,38 @@ function showWinMessage() {
 function showMessage(text) {
     messageElement.textContent = text;
     messageElement.style.display = 'block';
+}
+
+// Функция для создания плавающего сообщения
+function showFloatingMessage(text, x, y) {
+    floatingMessages.push({
+        x: x,
+        y: y,
+        text: text,
+        life: 100, // Время жизни в кадрах
+        velocityY: -2, // Движение вверх
+        opacity: 1,
+        update: function() {
+            this.y += this.velocityY;
+            this.life--;
+            this.opacity = this.life / 100;
+        },
+        draw: function(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.opacity;
+            ctx.font = 'bold 16px "Press Start 2P", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#FFD700';
+            ctx.strokeStyle = '#D32F2F';
+            ctx.lineWidth = 3;
+            
+            // Тень
+            ctx.strokeText(this.text, this.x, this.y);
+            // Основной текст
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    });
 }
 
 function createParticles(x, y, count, color) {
