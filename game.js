@@ -1,0 +1,474 @@
+// ===================== НАСТРОЙКИ ИГРЫ =====================
+const CONFIG = {
+    player: {
+        startX: 50,
+        startY: 250,
+        width: 40,
+        height: 60,
+        speed: 4,
+        jumpForce: 14,
+        lives: 3
+    },
+    gravity: 0.6,
+    world: {
+        groundLevel: 350,
+        skyColor: '#5c94fc'
+    }
+};
+
+// ===================== ИНИЦИАЛИЗАЦИЯ =====================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreElement = document.getElementById('score');
+const livesElement = document.getElementById('lives');
+const messageElement = document.getElementById('message');
+const loadingElement = document.getElementById('loading');
+const restartButton = document.getElementById('restartButton');
+
+// Загрузка спрайтов
+const sprites = {
+    player: new Image(),
+    ground: new Image(),
+    grass: new Image(),
+    gift: new Image(),
+    flag: new Image(),
+    cloud: new Image(),
+    bush: new Image(),
+    pipe: new Image()
+};
+
+// Источники изображений
+sprites.player.src = 'images/mama.png';
+sprites.ground.src = 'images/blocks.png';
+sprites.grass.src = 'images/blocks.png';
+sprites.gift.src = 'images/gift.png';
+sprites.flag.src = 'images/flag.png';
+sprites.cloud.src = 'images/cloud.png';
+sprites.bush.src = 'images/bush.png';
+sprites.pipe.src = 'images/pipe.png';
+
+let imagesLoaded = 0;
+const totalImages = Object.keys(sprites).length;
+
+// Проверка загрузки всех изображений
+Object.values(sprites).forEach(img => {
+    img.onload = () => {
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            loadingElement.style.display = 'none';
+            initGame();
+        }
+    };
+    img.onerror = () => {
+        console.error(`Ошибка загрузки: ${img.src}`);
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            loadingElement.style.display = 'none';
+            initGame();
+        }
+    };
+});
+
+// Игровые объекты
+let player = {
+    x: CONFIG.player.startX,
+    y: CONFIG.player.startY,
+    width: CONFIG.player.width,
+    height: CONFIG.player.height,
+    velocityX: 0,
+    velocityY: 0,
+    isOnGround: false,
+    facingRight: true,
+    lives: CONFIG.player.lives,
+    invincible: false,
+    invincibleTimer: 0
+};
+
+let platforms = [
+    // Основная земля
+    {x: 0, y: CONFIG.world.groundLevel, width: 800, height: 50, type: 'ground'},
+    // Платформы
+    {x: 150, y: 280, width: 120, height: 20, type: 'platform'},
+    {x: 320, y: 220, width: 120, height: 20, type: 'platform'},
+    {x: 500, y: 280, width: 120, height: 20, type: 'platform'},
+    {x: 650, y: 180, width: 100, height: 20, type: 'platform'}
+];
+
+let gifts = [
+    {x: 180, y: 240, width: 30, height: 30, collected: false, type: 'gift'},
+    {x: 350, y: 180, width: 30, height: 30, collected: false, type: 'gift'},
+    {x: 530, y: 240, width: 30, height: 30, collected: false, type: 'gift'},
+    {x: 680, y: 140, width: 30, height: 30, collected: false, type: 'gift'},
+    {x: 750, y: 100, width: 30, height: 30, collected: false, type: 'gift'}
+];
+
+let flag = {x: 750, y: 180, width: 40, height: 150, reached: false};
+let clouds = [
+    {x: 100, y: 60, width: 80, height: 40},
+    {x: 350, y: 80, width: 100, height: 50},
+    {x: 600, y: 40, width: 120, height: 60}
+];
+
+let bushes = [
+    {x: 50, y: CONFIG.world.groundLevel - 30, width: 60, height: 40},
+    {x: 300, y: CONFIG.world.groundLevel - 30, width: 80, height: 50},
+    {x: 550, y: CONFIG.world.groundLevel - 30, width: 70, height: 45}
+];
+
+let score = 0;
+let gameOver = false;
+let gameWin = false;
+const keys = {};
+const particles = [];
+
+// ===================== УПРАВЛЕНИЕ =====================
+document.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+    if (e.key === 'r' || e.key === 'R') resetGame();
+});
+
+document.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+restartButton.addEventListener('click', resetGame);
+
+// ===================== ФУНКЦИИ ИГРЫ =====================
+function initGame() {
+    player = {
+        x: CONFIG.player.startX,
+        y: CONFIG.player.startY,
+        width: CONFIG.player.width,
+        height: CONFIG.player.height,
+        velocityX: 0,
+        velocityY: 0,
+        isOnGround: false,
+        facingRight: true,
+        lives: CONFIG.player.lives,
+        invincible: false,
+        invincibleTimer: 0
+    };
+    
+    gifts.forEach(gift => gift.collected = false);
+    flag.reached = false;
+    score = 0;
+    gameOver = false;
+    gameWin = false;
+    scoreElement.textContent = score;
+    livesElement.textContent = '❤️'.repeat(player.lives);
+    messageElement.style.display = 'none';
+    
+    gameLoop();
+}
+
+function gameLoop() {
+    if (gameOver || gameWin) {
+        if (gameWin) {
+            showWinMessage();
+        }
+        return;
+    }
+    
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+function update() {
+    // Управление
+    player.velocityX = 0;
+    if (keys['ArrowLeft']) {
+        player.velocityX = -CONFIG.player.speed;
+        player.facingRight = false;
+    }
+    if (keys['ArrowRight']) {
+        player.velocityX = CONFIG.player.speed;
+        player.facingRight = true;
+    }
+    
+    // Прыжок
+    if (keys['ArrowUp'] && player.isOnGround) {
+        player.velocityY = -CONFIG.player.jumpForce;
+        player.isOnGround = false;
+        createParticles(player.x + player.width/2, player.y + player.height, 5, '#f1c40f');
+    }
+    
+    // Гравитация
+    player.velocityY += CONFIG.gravity;
+    
+    // Обновление позиции
+    player.x += player.velocityX;
+    player.y += player.velocityY;
+    
+    // Границы экрана
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+    
+    // Проверка падения
+    if (player.y > canvas.height) {
+        loseLife();
+        return;
+    }
+    
+    // Столкновение с платформами
+    player.isOnGround = false;
+    platforms.forEach(platform => {
+        if (player.x < platform.x + platform.width &&
+            player.x + player.width > platform.x &&
+            player.y + player.height > platform.y &&
+            player.y + player.height < platform.y + platform.height + player.velocityY) {
+            
+            player.y = platform.y - player.height;
+            player.velocityY = 0;
+            player.isOnGround = true;
+        }
+    });
+    
+    // Сбор подарков
+    gifts.forEach(gift => {
+        if (!gift.collected &&
+            player.x < gift.x + gift.width &&
+            player.x + player.width > gift.x &&
+            player.y < gift.y + gift.height &&
+            player.y + player.height > gift.y) {
+            
+            gift.collected = true;
+            score++;
+            scoreElement.textContent = score;
+            
+            // Эффект сбора
+            createParticles(gift.x + gift.width/2, gift.y + gift.height/2, 10, '#e74c3c');
+            gift.element?.classList.add('collecting');
+            
+            if (score === gifts.length) {
+                messageElement.textContent = "🎁 Все подарки собраны! К флагу! 🎁";
+                messageElement.style.display = 'block';
+                setTimeout(() => {
+                    messageElement.style.display = 'none';
+                }, 2000);
+            }
+        }
+    });
+    
+    // Достижение флага
+    if (!flag.reached &&
+        player.x < flag.x + flag.width &&
+        player.x + player.width > flag.x &&
+        player.y < flag.y + flag.height &&
+        player.y + player.height > flag.y) {
+        
+        flag.reached = true;
+        if (score === gifts.length) {
+            gameWin = true;
+        } else {
+            messageElement.textContent = "Собери все подарки сначала!";
+            messageElement.style.display = 'block';
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+                flag.reached = false;
+            }, 1500);
+        }
+    }
+    
+    // Обновление невидимости
+    if (player.invincible) {
+        player.invincibleTimer--;
+        if (player.invincibleTimer <= 0) {
+            player.invincible = false;
+        }
+    }
+    
+    // Обновление частиц
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+function draw() {
+    // Очистка экрана
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Фон
+    ctx.fillStyle = CONFIG.world.skyColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Облака
+    clouds.forEach(cloud => {
+        ctx.drawImage(sprites.cloud, cloud.x, cloud.y, cloud.width, cloud.height);
+    });
+    
+    // Кусты
+    bushes.forEach(bush => {
+        ctx.drawImage(sprites.bush, bush.x, bush.y, bush.width, bush.height);
+    });
+    
+    // Платформы
+    platforms.forEach(platform => {
+        if (platform.type === 'ground') {
+            // Рисуем землю с текстурой
+            for (let x = platform.x; x < platform.x + platform.width; x += 32) {
+                ctx.drawImage(sprites.ground, 0, 0, 32, 32, x, platform.y, 32, 32);
+            }
+            // Трава сверху
+            ctx.drawImage(sprites.grass, 32, 0, 32, 32, platform.x, platform.y - 10, platform.width, 20);
+        } else {
+            // Обычные платформы
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            ctx.fillStyle = '#7CFC00';
+            ctx.fillRect(platform.x, platform.y - 5, platform.width, 5);
+        }
+    });
+    
+    // Подарки
+    gifts.forEach(gift => {
+        if (!gift.collected) {
+            ctx.drawImage(sprites.gift, gift.x, gift.y, gift.width, gift.height);
+            // Мигающий эффект
+            if (Math.sin(Date.now() / 200) > 0) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(gift.x, gift.y, gift.width, gift.height);
+            }
+        }
+    });
+    
+    // Флаг
+    ctx.drawImage(sprites.flag, flag.x, flag.y, flag.width, flag.height);
+    
+    // Игрок
+    if (!player.invincible || Math.floor(Date.now() / 100) % 2 === 0) {
+        ctx.save();
+        if (!player.facingRight) {
+            ctx.translate(player.x + player.width, player.y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(sprites.player, 0, 0, player.width, player.height);
+        } else {
+            ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
+        }
+        ctx.restore();
+    }
+    
+    // Частицы
+    particles.forEach(particle => {
+        particle.draw(ctx);
+    });
+    
+    // Анимация флага при достижении
+    if (flag.reached) {
+        ctx.save();
+        ctx.translate(flag.x + flag.width, flag.y + 30);
+        ctx.rotate(Math.sin(Date.now() / 200) * 0.3);
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(40, -20);
+        ctx.lineTo(0, -40);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+function loseLife() {
+    if (player.invincible) return;
+    
+    player.lives--;
+    livesElement.textContent = '❤️'.repeat(player.lives);
+    
+    if (player.lives <= 0) {
+        gameOver = true;
+        showMessage("Попробуй ещё раз, мама верит в тебя! 💪");
+    } else {
+        player.invincible = true;
+        player.invincibleTimer = 120; // 2 секунды
+        player.x = CONFIG.player.startX;
+        player.y = CONFIG.player.startY;
+        player.velocityX = 0;
+        player.velocityY = 0;
+        
+        // Эффект потери жизни
+        for (let i = 0; i < 20; i++) {
+            createParticles(player.x + player.width/2, player.y + player.height/2, 3, '#e74c3c');
+        }
+    }
+}
+
+function showWinMessage() {
+    const messages = [
+        "🎊 ТЫ СУПЕР-МАМА! 🎊",
+        "С Юбилеем, родная!",
+        "Ты собрала все подарки!",
+        "Мы тебя очень любим! 💖"
+    ];
+    
+    let message = messages[0];
+    messageElement.innerHTML = `
+        <div style="margin-bottom: 20px; font-size: 1.5em;">${message}</div>
+        <div style="font-size: 0.8em; color: #2c3e50;">${messages.slice(1).join('<br>')}</div>
+        <div style="margin-top: 20px; font-size: 0.7em;">Нажми R или кнопку для новой игры</div>
+    `;
+    messageElement.style.display = 'block';
+    
+    // Фейерверк
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            createParticles(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height,
+                10,
+                ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db'][Math.floor(Math.random() * 4)]
+            );
+        }, i * 100);
+    }
+}
+
+function showMessage(text) {
+    messageElement.textContent = text;
+    messageElement.style.display = 'block';
+}
+
+function createParticles(x, y, count, color) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            velocityX: (Math.random() - 0.5) * 8,
+            velocityY: (Math.random() - 0.5) * 8 - 2,
+            life: 30 + Math.random() * 30,
+            color: color,
+            size: 3 + Math.random() * 5,
+            update: function() {
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                this.velocityY += 0.1;
+                this.life--;
+                this.size *= 0.95;
+            },
+            draw: function(ctx) {
+                ctx.globalAlpha = this.life / 60;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        });
+    }
+}
+
+function resetGame() {
+    initGame();
+}
+
+// Запуск загрузки
+setTimeout(() => {
+    if (loadingElement.style.display !== 'none') {
+        loadingElement.textContent = "Игра загружена! Начинаем...";
+        setTimeout(() => {
+            loadingElement.style.display = 'none';
+            initGame();
+        }, 1000);
+    }
+}, 3000);
