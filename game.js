@@ -25,72 +25,116 @@ const messageElement = document.getElementById('message');
 const loadingElement = document.getElementById('loading');
 const restartButton = document.getElementById('restartButton');
 
+// Инициализируем объект для спрайтов
+const sprites = {};
+
 // Создаем простые пиксельные спрайты программно
 function createPixelSprite(width, height, color, design) {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
+    const spriteCanvas = document.createElement('canvas');
+    spriteCanvas.width = width;
+    spriteCanvas.height = height;
+    const spriteCtx = spriteCanvas.getContext('2d');
     
     // Фон прозрачный
-    ctx.clearRect(0, 0, width, height);
+    spriteCtx.clearRect(0, 0, width, height);
     
     // Рисуем пиксельный спрайт
     if (design === 'player') {
         // Мама-Марио (пиксельный)
-        ctx.fillStyle = color;
+        spriteCtx.fillStyle = color;
         // Тело
-        ctx.fillRect(width/4, 0, width/2, height/2);
+        spriteCtx.fillRect(width/4, height/4, width/2, height/2);
         // Ноги
-        ctx.fillRect(width/4, height/2, width/4, height/2);
-        ctx.fillRect(width/2, height/2, width/4, height/2);
+        spriteCtx.fillRect(width/4, height*3/4, width/4, height/4);
+        spriteCtx.fillRect(width/2, height*3/4, width/4, height/4);
         // Голова
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(width/4, -height/4, width/2, height/4);
+        spriteCtx.fillStyle = '#FFD700';
+        spriteCtx.fillRect(width/4, 0, width/2, height/4);
         // Волосы
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(width/4, -height/4, width/2, height/8);
+        spriteCtx.fillStyle = '#8B4513';
+        spriteCtx.fillRect(width/4, 0, width/2, height/8);
     }
-    // ... и другие спрайты
+    else if (design === 'ground') {
+        // Земля - коричневый блок
+        spriteCtx.fillStyle = '#8B4513';
+        spriteCtx.fillRect(0, 0, width, height);
+        // Детали
+        spriteCtx.fillStyle = '#A0522D';
+        for (let i = 0; i < width; i += 8) {
+            for (let j = 0; j < height; j += 8) {
+                if ((i + j) % 16 === 0) {
+                    spriteCtx.fillRect(i, j, 4, 4);
+                }
+            }
+        }
+    }
+    else if (design === 'gift') {
+        // Подарок
+        spriteCtx.fillStyle = color;
+        spriteCtx.fillRect(0, 0, width, height);
+        // Ленточка
+        spriteCtx.fillStyle = '#FFFF00';
+        spriteCtx.fillRect(width/2 - 3, 0, 6, height); // Вертикальная
+        spriteCtx.fillRect(0, height/2 - 3, width, 6); // Горизонтальная
+        // Блеск
+        spriteCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        spriteCtx.fillRect(width/4, height/4, width/8, height/8);
+    }
+    else if (design === 'flag') {
+        // Флагшток
+        spriteCtx.fillStyle = '#8B4513';
+        spriteCtx.fillRect(width/2 - 3, 0, 6, height);
+        // Флаг
+        spriteCtx.fillStyle = '#FF0000';
+        spriteCtx.beginPath();
+        spriteCtx.moveTo(width/2, height/3);
+        spriteCtx.lineTo(width, height/3 - 15);
+        spriteCtx.lineTo(width/2, height/3 + 15);
+        spriteCtx.closePath();
+        spriteCtx.fill();
+    }
+    else if (design === 'cloud') {
+        // Облако
+        spriteCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2, height/2, Math.min(width, height)/2, 0, Math.PI * 2);
+        spriteCtx.fill();
+    }
+    else if (design === 'bush') {
+        // Куст
+        spriteCtx.fillStyle = '#228B22';
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2, height/2, Math.min(width, height)/2, 0, Math.PI * 2);
+        spriteCtx.fill();
+    }
+    else {
+        // Простой цветной прямоугольник для остальных
+        spriteCtx.fillStyle = color;
+        spriteCtx.fillRect(0, 0, width, height);
+    }
     
-    return canvas;
+    return spriteCanvas;
 }
 
-// Используем созданные спрайты
-sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
-// ... остальные спрайты
-
-// Источники изображений
-sprites.player.src = 'images/mama.png';
-sprites.ground.src = 'images/blocks.png';
-sprites.grass.src = 'images/blocks.png';
-sprites.gift.src = 'images/gift.png';
-sprites.flag.src = 'images/flag.png';
-sprites.cloud.src = 'images/cloud.png';
-sprites.bush.src = 'images/bush.png';
-sprites.pipe.src = 'images/pipe.png';
-
-let imagesLoaded = 0;
-const totalImages = Object.keys(sprites).length;
-
-// Проверка загрузки всех изображений
-Object.values(sprites).forEach(img => {
-    img.onload = () => {
-        imagesLoaded++;
-        if (imagesLoaded === totalImages) {
-            loadingElement.style.display = 'none';
-            initGame();
-        }
-    };
-    img.onerror = () => {
-        console.error(`Ошибка загрузки: ${img.src}`);
-        imagesLoaded++;
-        if (imagesLoaded === totalImages) {
-            loadingElement.style.display = 'none';
-            initGame();
-        }
-    };
-});
+// Функция загрузки спрайтов
+function loadSprites() {
+    // Создаем программные спрайты (вместо загрузки изображений)
+    sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
+    sprites.ground = createPixelSprite(32, 32, '#8B4513', 'ground');
+    sprites.grass = createPixelSprite(32, 32, '#7CFC00', 'grass');
+    sprites.gift = createPixelSprite(30, 30, '#FF4081', 'gift');
+    sprites.flag = createPixelSprite(40, 150, '#FFD700', 'flag');
+    sprites.cloud = createPixelSprite(80, 40, '#FFFFFF', 'cloud');
+    sprites.bush = createPixelSprite(60, 40, '#228B22', 'bush');
+    sprites.pipe = createPixelSprite(60, 80, '#32CD32', 'pipe');
+    
+    // Симулируем загрузку
+    loadingElement.textContent = "Спрайты созданы!";
+    setTimeout(() => {
+        loadingElement.style.display = 'none';
+        initGame();
+    }, 1000);
+}
 
 // Игровые объекты
 let player = {
@@ -261,7 +305,6 @@ function update() {
             
             // Эффект сбора
             createParticles(gift.x + gift.width/2, gift.y + gift.height/2, 10, '#e74c3c');
-            gift.element?.classList.add('collecting');
             
             if (score === gifts.length) {
                 messageElement.textContent = "🎁 Все подарки собраны! К флагу! 🎁";
@@ -333,10 +376,12 @@ function draw() {
         if (platform.type === 'ground') {
             // Рисуем землю с текстурой
             for (let x = platform.x; x < platform.x + platform.width; x += 32) {
-                ctx.drawImage(sprites.ground, 0, 0, 32, 32, x, platform.y, 32, 32);
+                ctx.drawImage(sprites.ground, x, platform.y, 32, 32);
             }
             // Трава сверху
-            ctx.drawImage(sprites.grass, 32, 0, 32, 32, platform.x, platform.y - 10, platform.width, 20);
+            for (let x = platform.x; x < platform.x + platform.width; x += 32) {
+                ctx.drawImage(sprites.grass, x, platform.y - 10, 32, 20);
+            }
         } else {
             // Обычные платформы
             ctx.fillStyle = '#8B4513';
@@ -485,13 +530,5 @@ function resetGame() {
     initGame();
 }
 
-// Запуск загрузки
-setTimeout(() => {
-    if (loadingElement.style.display !== 'none') {
-        loadingElement.textContent = "Игра загружена! Начинаем...";
-        setTimeout(() => {
-            loadingElement.style.display = 'none';
-            initGame();
-        }, 1000);
-    }
-}, 3000);
+// Запуск игры
+loadSprites();
