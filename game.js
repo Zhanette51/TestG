@@ -25,17 +25,40 @@ const messageElement = document.getElementById('message');
 const loadingElement = document.getElementById('loading');
 const restartButton = document.getElementById('restartButton');
 
-// Загрузка спрайтов
-const sprites = {
-    player: new Image(),
-    ground: new Image(),
-    grass: new Image(),
-    gift: new Image(),
-    flag: new Image(),
-    cloud: new Image(),
-    bush: new Image(),
-    pipe: new Image()
-};
+// Создаем простые пиксельные спрайты программно
+function createPixelSprite(width, height, color, design) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    // Фон прозрачный
+    ctx.clearRect(0, 0, width, height);
+    
+    // Рисуем пиксельный спрайт
+    if (design === 'player') {
+        // Мама-Марио (пиксельный)
+        ctx.fillStyle = color;
+        // Тело
+        ctx.fillRect(width/4, 0, width/2, height/2);
+        // Ноги
+        ctx.fillRect(width/4, height/2, width/4, height/2);
+        ctx.fillRect(width/2, height/2, width/4, height/2);
+        // Голова
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(width/4, -height/4, width/2, height/4);
+        // Волосы
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(width/4, -height/4, width/2, height/8);
+    }
+    // ... и другие спрайты
+    
+    return canvas;
+}
+
+// Используем созданные спрайты
+sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
+// ... остальные спрайты
 
 // Источники изображений
 sprites.player.src = 'images/mama.png';
