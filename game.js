@@ -1,18 +1,18 @@
 // ===================== НАСТРОЙКИ ИГРЫ =====================
 const CONFIG = {
     player: {
-        startX: 50,
-        startY: 250,
-        width: 40,
-        height: 60,
-        speed: 4,
-        jumpForce: 14,
+        startX: 80,
+        startY: 350,
+        width: 80,
+        height: 120,
+        speed: 6,
+        jumpForce: 18,
         lives: 3
     },
-    gravity: 0.6,
+    gravity: 0.8,
     world: {
-        groundLevel: 350,
-        skyColor: '#5c94fc'
+        groundLevel: 450,
+        skyColor: '#87CEEB'
     }
 };
 
@@ -42,89 +42,270 @@ const giftMessages = [
 // Инициализируем объект для спрайтов
 const sprites = {};
 
-// Создаем простые пиксельные спрайты программно
-function createPixelSprite(width, height, color, design) {
+// Создаем детализированные спрайты программно
+function createDetailedSprite(width, height, type) {
     const spriteCanvas = document.createElement('canvas');
     spriteCanvas.width = width;
     spriteCanvas.height = height;
     const spriteCtx = spriteCanvas.getContext('2d');
     
-    // Фон прозрачный
     spriteCtx.clearRect(0, 0, width, height);
     
-    // Рисуем пиксельный спрайт
-    if (design === 'player') {
-        // Мама-Марио (пиксельный)
-        spriteCtx.fillStyle = color;
-        // Тело
-        spriteCtx.fillRect(width/4, height/4, width/2, height/2);
-        // Ноги
-        spriteCtx.fillRect(width/4, height*3/4, width/4, height/4);
-        spriteCtx.fillRect(width/2, height*3/4, width/4, height/4);
-        // Голова
-        spriteCtx.fillStyle = '#FFD700';
-        spriteCtx.fillRect(width/4, 0, width/2, height/4);
+    if (type === 'princess') {
+        // Детализированная принцесса
+        const bodyWidth = width * 0.6;
+        const bodyHeight = height * 0.4;
+        
+        // Платье (нижняя часть)
+        spriteCtx.fillStyle = '#FF1493';
+        spriteCtx.beginPath();
+        spriteCtx.moveTo(width/2 - bodyWidth/2, height * 0.6);
+        spriteCtx.bezierCurveTo(
+            width/2 - bodyWidth/2, height * 0.6,
+            width/2 - bodyWidth/3, height,
+            width/2, height
+        );
+        spriteCtx.bezierCurveTo(
+            width/2, height,
+            width/2 + bodyWidth/3, height,
+            width/2 + bodyWidth/2, height * 0.6
+        );
+        spriteCtx.closePath();
+        spriteCtx.fill();
+        
+        // Верх платья
+        spriteCtx.fillStyle = '#FF69B4';
+        spriteCtx.fillRect(width/2 - bodyWidth/2, height * 0.4, bodyWidth, height * 0.2);
+        
+        // Лицо
+        spriteCtx.fillStyle = '#FFE4B5';
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2, height * 0.3, width * 0.2, 0, Math.PI * 2);
+        spriteCtx.fill();
+        
         // Волосы
         spriteCtx.fillStyle = '#8B4513';
-        spriteCtx.fillRect(width/4, 0, width/2, height/8);
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2, height * 0.3, width * 0.22, 0, Math.PI * 2);
+        spriteCtx.fill();
+        
+        // Корона
+        spriteCtx.fillStyle = '#FFD700';
+        spriteCtx.fillRect(width/2 - width*0.15, height * 0.18, width * 0.3, width * 0.1);
+        // Зубцы короны
+        for (let i = 0; i < 5; i++) {
+            const x = width/2 - width*0.15 + i * (width * 0.3 / 5);
+            spriteCtx.beginPath();
+            spriteCtx.moveTo(x, height * 0.18);
+            spriteCtx.lineTo(x + width*0.03, height * 0.1);
+            spriteCtx.lineTo(x + width*0.06, height * 0.18);
+            spriteCtx.closePath();
+            spriteCtx.fill();
+        }
+        
+        // Глаза
+        spriteCtx.fillStyle = '#000';
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2 - width*0.08, height * 0.28, width * 0.03, 0, Math.PI * 2);
+        spriteCtx.arc(width/2 + width*0.08, height * 0.28, width * 0.03, 0, Math.PI * 2);
+        spriteCtx.fill();
+        
+        // Улыбка
+        spriteCtx.strokeStyle = '#FF69B4';
+        spriteCtx.lineWidth = 3;
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/2, height * 0.33, width * 0.1, 0.2, Math.PI - 0.2);
+        spriteCtx.stroke();
+        
+        // Руки
+        spriteCtx.fillStyle = '#FFE4B5';
+        spriteCtx.fillRect(width/2 - bodyWidth/2 - width*0.08, height * 0.45, width*0.08, height*0.1);
+        spriteCtx.fillRect(width/2 + bodyWidth/2, height * 0.45, width*0.08, height*0.1);
+        
+        // Украшения на платье
+        spriteCtx.fillStyle = '#FFD700';
+        for (let i = 0; i < 5; i++) {
+            const x = width/2 - bodyWidth/3 + i * (bodyWidth * 0.4 / 4);
+            spriteCtx.beginPath();
+            spriteCtx.arc(x, height * 0.55, width * 0.03, 0, Math.PI * 2);
+            spriteCtx.fill();
+        }
     }
-    else if (design === 'ground') {
-        // Земля - коричневый блок
+    else if (type === 'detailed_ground') {
+        // Детализированная земля с текстурой
         spriteCtx.fillStyle = '#8B4513';
         spriteCtx.fillRect(0, 0, width, height);
-        // Детали
+        
+        // Текстура земли
         spriteCtx.fillStyle = '#A0522D';
-        for (let i = 0; i < width; i += 8) {
-            for (let j = 0; j < height; j += 8) {
-                if ((i + j) % 16 === 0) {
-                    spriteCtx.fillRect(i, j, 4, 4);
+        for (let i = 0; i < width; i += 6) {
+            for (let j = 0; j < height; j += 6) {
+                if (Math.random() > 0.7) {
+                    spriteCtx.fillRect(i, j, 3, 3);
                 }
             }
         }
     }
-    else if (design === 'gift') {
-        // Подарок
-        spriteCtx.fillStyle = color;
+    else if (type === 'detailed_grass') {
+        // Детализированная трава
+        spriteCtx.fillStyle = '#32CD32';
         spriteCtx.fillRect(0, 0, width, height);
+        
+        // Травинки
+        spriteCtx.fillStyle = '#228B22';
+        for (let i = 0; i < width; i += 4) {
+            const height = 3 + Math.random() * 6;
+            spriteCtx.fillRect(i, 0, 2, height);
+        }
+    }
+    else if (type === 'detailed_gift') {
+        // Детализированный подарок
+        spriteCtx.fillStyle = '#FF4081';
+        spriteCtx.fillRect(0, 0, width, height);
+        
         // Ленточка
         spriteCtx.fillStyle = '#FFFF00';
-        spriteCtx.fillRect(width/2 - 3, 0, 6, height); // Вертикальная
-        spriteCtx.fillRect(0, height/2 - 3, width, 6); // Горизонтальная
-        // Блеск
-        spriteCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        spriteCtx.fillRect(width/4, height/4, width/8, height/8);
+        spriteCtx.fillRect(width/2 - 4, 0, 8, height);
+        spriteCtx.fillRect(0, height/2 - 4, width, 8);
+        
+        // Блестящие украшения
+        spriteCtx.fillStyle = '#FFFFFF';
+        spriteCtx.beginPath();
+        spriteCtx.arc(width/4, height/4, width/8, 0, Math.PI * 2);
+        spriteCtx.fill();
+        spriteCtx.beginPath();
+        spriteCtx.arc(width*3/4, height*3/4, width/12, 0, Math.PI * 2);
+        spriteCtx.fill();
     }
-    else if (design === 'flag') {
+    else if (type === 'detailed_flag') {
         // Флагшток
         spriteCtx.fillStyle = '#8B4513';
-        spriteCtx.fillRect(width/2 - 3, 0, 6, height);
+        spriteCtx.fillRect(width/2 - 5, 0, 10, height);
+        
         // Флаг
         spriteCtx.fillStyle = '#FF0000';
         spriteCtx.beginPath();
-        spriteCtx.moveTo(width/2, height/3);
-        spriteCtx.lineTo(width, height/3 - 15);
-        spriteCtx.lineTo(width/2, height/3 + 15);
+        spriteCtx.moveTo(width/2, height/4);
+        spriteCtx.lineTo(width, height/4 - 20);
+        spriteCtx.lineTo(width/2, height/4 + 20);
         spriteCtx.closePath();
         spriteCtx.fill();
-    }
-    else if (design === 'cloud') {
-        // Облако
-        spriteCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        
+        // Украшение наверху
+        spriteCtx.fillStyle = '#FFD700';
         spriteCtx.beginPath();
-        spriteCtx.arc(width/2, height/2, Math.min(width, height)/2, 0, Math.PI * 2);
+        spriteCtx.arc(width/2, 10, 15, 0, Math.PI * 2);
         spriteCtx.fill();
     }
-    else if (design === 'bush') {
-        // Куст
+    else if (type === 'detailed_cloud') {
+        // Детализированное облако
+        spriteCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        spriteCtx.beginPath();
+        
+        const centerX = width/2;
+        const centerY = height/2;
+        
+        // Рисуем пушистое облако
+        spriteCtx.arc(centerX - width*0.2, centerY, height*0.4, 0, Math.PI * 2);
+        spriteCtx.arc(centerX, centerY, height*0.5, 0, Math.PI * 2);
+        spriteCtx.arc(centerX + width*0.2, centerY, height*0.4, 0, Math.PI * 2);
+        spriteCtx.arc(centerX - width*0.1, centerY - height*0.2, height*0.3, 0, Math.PI * 2);
+        spriteCtx.arc(centerX + width*0.1, centerY - height*0.2, height*0.3, 0, Math.PI * 2);
+        
+        spriteCtx.fill();
+        
+        // Тени для объема
+        spriteCtx.fillStyle = 'rgba(200, 220, 240, 0.3)';
+        spriteCtx.beginPath();
+        spriteCtx.arc(centerX - width*0.2, centerY + height*0.1, height*0.35, 0, Math.PI * 2);
+        spriteCtx.fill();
+    }
+    else if (type === 'detailed_bush') {
+        // Детализированный куст
+        const centerX = width/2;
+        const centerY = height/2;
+        
+        // Основные листья
         spriteCtx.fillStyle = '#228B22';
         spriteCtx.beginPath();
-        spriteCtx.arc(width/2, height/2, Math.min(width, height)/2, 0, Math.PI * 2);
+        spriteCtx.arc(centerX, centerY, Math.min(width, height)*0.4, 0, Math.PI * 2);
         spriteCtx.fill();
+        
+        // Более светлые листья сверху
+        spriteCtx.fillStyle = '#32CD32';
+        spriteCtx.beginPath();
+        spriteCtx.arc(centerX - width*0.2, centerY - height*0.1, width*0.3, 0, Math.PI * 2);
+        spriteCtx.arc(centerX + width*0.2, centerY - height*0.1, width*0.3, 0, Math.PI * 2);
+        spriteCtx.fill();
+        
+        // Ягодки
+        spriteCtx.fillStyle = '#FF4500';
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * width*0.3;
+            const y = centerY + Math.sin(angle) * height*0.2;
+            spriteCtx.beginPath();
+            spriteCtx.arc(x, y, width*0.05, 0, Math.PI * 2);
+            spriteCtx.fill();
+        }
     }
-    else {
-        // Простой цветной прямоугольник для остальных
-        spriteCtx.fillStyle = color;
-        spriteCtx.fillRect(0, 0, width, height);
+    else if (type === 'levitating_island') {
+        // Левитирующий островок
+        const centerX = width/2;
+        
+        // Основная платформа
+        spriteCtx.fillStyle = '#8B4513';
+        spriteCtx.beginPath();
+        spriteCtx.moveTo(0, height);
+        spriteCtx.bezierCurveTo(
+            width*0.2, height*0.8,
+            width*0.8, height*0.8,
+            width, height
+        );
+        spriteCtx.lineTo(width, height);
+        spriteCtx.lineTo(0, height);
+        spriteCtx.closePath();
+        spriteCtx.fill();
+        
+        // Верх платформы
+        spriteCtx.fillStyle = '#A0522D';
+        spriteCtx.fillRect(0, height*0.6, width, height*0.4);
+        
+        // Трава сверху
+        spriteCtx.fillStyle = '#32CD32';
+        spriteCtx.fillRect(0, height*0.55, width, height*0.1);
+        
+        // Травинки
+        spriteCtx.fillStyle = '#228B22';
+        for (let i = 0; i < width; i += 8) {
+            const h = 5 + Math.random() * 10;
+            spriteCtx.fillRect(i, height*0.55 - h, 2, h);
+        }
+        
+        // Камни и детали
+        spriteCtx.fillStyle = '#696969';
+        for (let i = 0; i < 5; i++) {
+            const x = Math.random() * width;
+            const y = height*0.65 + Math.random() * height*0.3;
+            const size = 5 + Math.random() * 15;
+            spriteCtx.beginPath();
+            spriteCtx.arc(x, y, size, 0, Math.PI * 2);
+            spriteCtx.fill();
+        }
+        
+        // Эффект левитации (свечение снизу)
+        spriteCtx.fillStyle = 'rgba(124, 252, 0, 0.3)';
+        spriteCtx.beginPath();
+        spriteCtx.moveTo(0, height);
+        spriteCtx.bezierCurveTo(
+            width*0.3, height + 20,
+            width*0.7, height + 20,
+            width, height
+        );
+        spriteCtx.lineTo(width, height);
+        spriteCtx.lineTo(0, height);
+        spriteCtx.closePath();
+        spriteCtx.fill();
     }
     
     return spriteCanvas;
@@ -132,24 +313,23 @@ function createPixelSprite(width, height, color, design) {
 
 // Функция загрузки спрайтов
 function loadSprites() {
-    // Создаем все спрайты программно
-    sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
-    sprites.ground = createPixelSprite(32, 32, '#8B4513', 'ground');
-    sprites.grass = createPixelSprite(32, 32, '#7CFC00', 'grass');
-    sprites.gift = createPixelSprite(30, 30, '#FF4081', 'gift');
-    sprites.flag = createPixelSprite(40, 150, '#FFD700', 'flag');
-    sprites.cloud = createPixelSprite(80, 40, '#FFFFFF', 'cloud');
-    sprites.bush = createPixelSprite(60, 40, '#228B22', 'bush');
-    sprites.pipe = createPixelSprite(60, 80, '#32CD32', 'pipe');
+    // Создаем детализированные спрайты
+    sprites.player = createDetailedSprite(80, 120, 'princess');
+    sprites.ground = createDetailedSprite(64, 64, 'detailed_ground');
+    sprites.grass = createDetailedSprite(64, 32, 'detailed_grass');
+    sprites.gift = createDetailedSprite(45, 45, 'detailed_gift');
+    sprites.flag = createDetailedSprite(60, 225, 'detailed_flag');
+    sprites.cloud = createDetailedSprite(150, 80, 'detailed_cloud');
+    sprites.bush = createDetailedSprite(120, 80, 'detailed_bush');
+    sprites.island = createDetailedSprite(200, 100, 'levitating_island');
     
-    // НЕ используем внешнее изображение, чтобы избежать проблем с CORS
-    // Симулируем загрузку и сразу запускаем игру
-    loadingElement.textContent = "Игра загружается...";
+    // Симулируем загрузку
+    loadingElement.textContent = "Создаю волшебный мир...";
     
     setTimeout(() => {
         loadingElement.style.display = 'none';
         initGame();
-    }, 500);
+    }, 1000);
 }
 
 // Игровые объекты
@@ -169,33 +349,47 @@ let player = {
 
 let platforms = [
     // Основная земля
-    {x: 0, y: CONFIG.world.groundLevel, width: 800, height: 50, type: 'ground'},
-    // Платформы (островки)
-    {x: 150, y: 280, width: 120, height: 20, type: 'platform', originalY: 280},
-    {x: 320, y: 220, width: 120, height: 20, type: 'platform', originalY: 220},
-    {x: 500, y: 280, width: 120, height: 20, type: 'platform', originalY: 280},
-    {x: 650, y: 180, width: 100, height: 20, type: 'platform', originalY: 180}
+    {x: 0, y: CONFIG.world.groundLevel, width: 1200, height: 150, type: 'ground'},
+    // Левитирующие островки
+    {x: 200, y: 320, width: 180, height: 40, type: 'island', originalY: 320},
+    {x: 450, y: 250, width: 200, height: 40, type: 'island', originalY: 250},
+    {x: 750, y: 320, width: 180, height: 40, type: 'island', originalY: 320},
+    {x: 950, y: 200, width: 150, height: 40, type: 'island', originalY: 200},
+    // Дополнительные островки
+    {x: 300, y: 180, width: 120, height: 30, type: 'island', originalY: 180},
+    {x: 600, y: 150, width: 140, height: 35, type: 'island', originalY: 150}
 ];
 
 let gifts = [
-    {x: 180, y: 240, width: 30, height: 30, collected: false, type: 'gift'},
-    {x: 350, y: 180, width: 30, height: 30, collected: false, type: 'gift'},
-    {x: 530, y: 240, width: 30, height: 30, collected: false, type: 'gift'},
-    {x: 680, y: 140, width: 30, height: 30, collected: false, type: 'gift'},
-    {x: 750, y: 100, width: 30, height: 30, collected: false, type: 'gift'}
+    {x: 230, y: 270, width: 45, height: 45, collected: false, type: 'gift'},
+    {x: 500, y: 200, width: 45, height: 45, collected: false, type: 'gift'},
+    {x: 800, y: 270, width: 45, height: 45, collected: false, type: 'gift'},
+    {x: 1000, y: 150, width: 45, height: 45, collected: false, type: 'gift'},
+    {x: 1100, y: 120, width: 45, height: 45, collected: false, type: 'gift'}
 ];
 
-let flag = {x: 750, y: 180, width: 40, height: 150, reached: false};
+let flag = {x: 1100, y: 200, width: 60, height: 225, reached: false};
 let clouds = [
-    {x: 100, y: 60, width: 80, height: 40},
-    {x: 350, y: 80, width: 100, height: 50},
-    {x: 600, y: 40, width: 120, height: 60}
+    {x: 100, y: 80, width: 150, height: 80},
+    {x: 400, y: 60, width: 180, height: 90},
+    {x: 700, y: 100, width: 200, height: 100},
+    {x: 900, y: 50, width: 160, height: 70},
+    {x: 1100, y: 80, width: 140, height: 60}
 ];
 
 let bushes = [
-    {x: 50, y: CONFIG.world.groundLevel - 30, width: 60, height: 40},
-    {x: 300, y: CONFIG.world.groundLevel - 30, width: 80, height: 50},
-    {x: 550, y: CONFIG.world.groundLevel - 30, width: 70, height: 45}
+    {x: 50, y: CONFIG.world.groundLevel - 60, width: 120, height: 80},
+    {x: 250, y: CONFIG.world.groundLevel - 70, width: 140, height: 90},
+    {x: 500, y: CONFIG.world.groundLevel - 60, width: 130, height: 85},
+    {x: 750, y: CONFIG.world.groundLevel - 80, width: 150, height: 95},
+    {x: 1000, y: CONFIG.world.groundLevel - 65, width: 125, height: 82}
+];
+
+let trees = [
+    {x: 150, y: CONFIG.world.groundLevel - 150, width: 60, height: 150},
+    {x: 350, y: CONFIG.world.groundLevel - 180, width: 70, height: 180},
+    {x: 650, y: CONFIG.world.groundLevel - 160, width: 65, height: 160},
+    {x: 850, y: CONFIG.world.groundLevel - 200, width: 80, height: 200}
 ];
 
 let score = 0;
@@ -275,7 +469,7 @@ function update() {
     if (keys['ArrowUp'] && player.isOnGround) {
         player.velocityY = -CONFIG.player.jumpForce;
         player.isOnGround = false;
-        createParticles(player.x + player.width/2, player.y + player.height, 5, '#f1c40f');
+        createParticles(player.x + player.width/2, player.y + player.height, 10, '#f1c40f');
     }
     
     // Гравитация
@@ -290,20 +484,18 @@ function update() {
     if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
     
     // Проверка падения
-    if (player.y > canvas.height) {
+    if (player.y > canvas.height + 100) {
         loseLife();
         return;
     }
     
-    // ЛЕВИТАЦИЯ ОСТРОВКОВ (платформ)
+    // ЛЕВИТАЦИЯ ОСТРОВКОВ
     platforms.forEach((platform, index) => {
-        if (platform.type === 'platform') {
-            // Плавное движение вверх-вниз
-            const time = Date.now() * 0.001; // Текущее время в секундах
-            const floatSpeed = 0.5 + index * 0.1; // Разная скорость для каждого островка
-            const floatHeight = 5 + index * 0.5; // Разная высота левитации
+        if (platform.type === 'island') {
+            const time = Date.now() * 0.001;
+            const floatSpeed = 0.5 + index * 0.1;
+            const floatHeight = 10 + index * 2;
             
-            // Используем синусоидальную функцию для плавного движения
             platform.y = platform.originalY + Math.sin(time * floatSpeed) * floatHeight;
         }
     });
@@ -320,10 +512,10 @@ function update() {
             player.velocityY = 0;
             player.isOnGround = true;
             
-            // Если это левитирующий островок, добавляем эффект "пружинистости"
-            if (platform.type === 'platform') {
-                // Небольшой отскок при приземлении
-                player.velocityY = -1;
+            // Эффект приземления на левитирующий остров
+            if (platform.type === 'island') {
+                createParticles(player.x + player.width/2, player.y + player.height, 8, '#32CD32');
+                player.velocityY = -2; // Мягкий отскок
             }
         }
     });
@@ -341,7 +533,7 @@ function update() {
             scoreElement.textContent = score;
             
             // Эффект сбора
-            createParticles(gift.x + gift.width/2, gift.y + gift.height/2, 10, '#e74c3c');
+            createParticles(gift.x + gift.width/2, gift.y + gift.height/2, 15, '#e74c3c');
             
             // Показываем приятное сообщение
             showFloatingMessage(
@@ -409,13 +601,38 @@ function draw() {
     // Очистка экрана
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Фон
-    ctx.fillStyle = CONFIG.world.skyColor;
+    // Фон неба с градиентом
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, '#87CEEB');
+    skyGradient.addColorStop(1, '#5c94fc');
+    ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Облака
-    clouds.forEach(cloud => {
-        ctx.drawImage(sprites.cloud, cloud.x, cloud.y, cloud.width, cloud.height);
+    // Солнце
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(1100, 80, 50, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.arc(1100, 80, 70, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Облака с эффектом левитации
+    clouds.forEach((cloud, index) => {
+        const cloudFloat = Math.sin(Date.now() * 0.0005 + index) * 5;
+        ctx.drawImage(sprites.cloud, cloud.x, cloud.y + cloudFloat, cloud.width, cloud.height);
+    });
+    
+    // Деревья
+    trees.forEach(tree => {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(tree.x, tree.y, tree.width, tree.height);
+        
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.arc(tree.x + tree.width/2, tree.y, tree.width * 1.5, 0, Math.PI * 2);
+        ctx.fill();
     });
     
     // Кусты
@@ -423,44 +640,34 @@ function draw() {
         ctx.drawImage(sprites.bush, bush.x, bush.y, bush.width, bush.height);
     });
     
-    // Платформы
+    // Основная земля
+    for (let x = 0; x < platforms[0].width; x += 64) {
+        ctx.drawImage(sprites.ground, x, platforms[0].y, 64, 64);
+        // Трава сверху
+        for (let grassX = x; grassX < x + 64; grassX += 64) {
+            ctx.drawImage(sprites.grass, grassX, platforms[0].y - 32, 64, 32);
+        }
+    }
+    
+    // Левитирующие островки
     platforms.forEach((platform, index) => {
-        if (platform.type === 'ground') {
-            // Рисуем землю с текстурой
-            for (let x = platform.x; x < platform.x + platform.width; x += 32) {
-                ctx.drawImage(sprites.ground, x, platform.y, 32, 32);
-            }
-            // Трава сверху
-            for (let x = platform.x; x < platform.x + platform.width; x += 32) {
-                ctx.drawImage(sprites.grass, x, platform.y - 10, 32, 20);
-            }
-        } else {
-            // Левитирующие платформы (островки)
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-            ctx.fillStyle = '#7CFC00';
-            ctx.fillRect(platform.x, platform.y - 5, platform.width, 5);
-            
-            // Эффект левитации (свечение под платформой)
-            ctx.shadowColor = 'rgba(124, 252, 0, 0.3)';
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = 'rgba(124, 252, 0, 0.2)';
-            ctx.fillRect(platform.x - 5, platform.y + platform.height, platform.width + 10, 5);
-            ctx.shadowBlur = 0;
+        if (platform.type === 'island') {
+            ctx.drawImage(sprites.island, platform.x, platform.y, platform.width, platform.height);
         }
     });
     
-    // Подарки (также добавляем небольшую левитацию)
+    // Подарки с левитацией
     gifts.forEach(gift => {
         if (!gift.collected) {
-            // Левитация подарков
-            const giftFloat = Math.sin(Date.now() * 0.003 + gift.x) * 3;
+            const giftFloat = Math.sin(Date.now() * 0.003 + gift.x) * 5;
             ctx.drawImage(sprites.gift, gift.x, gift.y + giftFloat, gift.width, gift.height);
             
-            // Мигающий эффект
-            if (Math.sin(Date.now() / 200) > 0) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(gift.x, gift.y + giftFloat, gift.width, gift.height);
+            // Эффект сияния
+            if (Math.sin(Date.now() / 150) > 0) {
+                ctx.shadowColor = '#FF4081';
+                ctx.shadowBlur = 20;
+                ctx.drawImage(sprites.gift, gift.x, gift.y + giftFloat, gift.width, gift.height);
+                ctx.shadowBlur = 0;
             }
         }
     });
@@ -468,7 +675,21 @@ function draw() {
     // Флаг
     ctx.drawImage(sprites.flag, flag.x, flag.y, flag.width, flag.height);
     
-    // Игрок
+    // Анимация флага
+    if (flag.reached) {
+        ctx.save();
+        ctx.translate(flag.x + flag.width, flag.y + 50);
+        ctx.rotate(Math.sin(Date.now() / 200) * 0.5);
+        ctx.fillStyle = '#FF0000';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(60, -30);
+        ctx.lineTo(0, -60);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    // Игрок (принцесса)
     if (!player.invincible || Math.floor(Date.now() / 100) % 2 === 0) {
         ctx.save();
         if (!player.facingRight) {
@@ -479,6 +700,11 @@ function draw() {
             ctx.drawImage(sprites.player, player.x, player.y, player.width, player.height);
         }
         ctx.restore();
+        
+        // Эффект при движении
+        if (player.velocityX !== 0 && player.isOnGround) {
+            createParticles(player.x + player.width/2, player.y + player.height, 3, '#FF69B4');
+        }
     }
     
     // Частицы
@@ -490,20 +716,6 @@ function draw() {
     floatingMessages.forEach(message => {
         message.draw(ctx);
     });
-    
-    // Анимация флага при достижении
-    if (flag.reached) {
-        ctx.save();
-        ctx.translate(flag.x + flag.width, flag.y + 30);
-        ctx.rotate(Math.sin(Date.now() / 200) * 0.3);
-        ctx.fillStyle = '#e74c3c';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(40, -20);
-        ctx.lineTo(0, -40);
-        ctx.fill();
-        ctx.restore();
-    }
 }
 
 function loseLife() {
@@ -514,48 +726,48 @@ function loseLife() {
     
     if (player.lives <= 0) {
         gameOver = true;
-        showMessage("Попробуй ещё раз, я верю в тебя! 💪");
+        showMessage("Попробуй ещё раз, принцесса! 💪");
     } else {
         player.invincible = true;
-        player.invincibleTimer = 120; // 2 секунды
+        player.invincibleTimer = 120;
         player.x = CONFIG.player.startX;
         player.y = CONFIG.player.startY;
         player.velocityX = 0;
         player.velocityY = 0;
         
         // Эффект потери жизни
-        for (let i = 0; i < 20; i++) {
-            createParticles(player.x + player.width/2, player.y + player.height/2, 3, '#e74c3c');
+        for (let i = 0; i < 25; i++) {
+            createParticles(player.x + player.width/2, player.y + player.height/2, 5, '#e74c3c');
         }
     }
 }
 
 function showWinMessage() {
     const messages = [
-        "🎊 ТЫ СУПЕР-МАМА! 🎊",
-        "С Юбилеем!",
+        "🎊 ТЫ СУПЕР-ПРИНЦЕССА! 🎊",
+        "С Юбилеем, королева! 👑",
         "Ты собрала все подарки!",
         "Мы тебя очень любим! 💖"
     ];
     
     let message = messages[0];
     messageElement.innerHTML = `
-        <div style="margin-bottom: 20px; font-size: 1.5em;">${message}</div>
-        <div style="font-size: 0.8em; color: #2c3e50;">${messages.slice(1).join('<br>')}</div>
-        <div style="margin-top: 20px; font-size: 0.7em;">Нажми R или кнопку для новой игры</div>
+        <div style="margin-bottom: 30px; font-size: 2em;">${message}</div>
+        <div style="font-size: 1em; color: #2c3e50;">${messages.slice(1).join('<br>')}</div>
+        <div style="margin-top: 30px; font-size: 0.9em;">Нажми R или кнопку для новой игры</div>
     `;
     messageElement.style.display = 'block';
     
-    // Фейерверк
-    for (let i = 0; i < 50; i++) {
+    // Большой фейерверк
+    for (let i = 0; i < 100; i++) {
         setTimeout(() => {
             createParticles(
                 Math.random() * canvas.width,
                 Math.random() * canvas.height,
-                10,
-                ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db'][Math.floor(Math.random() * 4)]
+                15,
+                ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6'][Math.floor(Math.random() * 5)]
             );
-        }, i * 100);
+        }, i * 50);
     }
 }
 
@@ -570,22 +782,22 @@ function showFloatingMessage(text, x, y) {
         x: x,
         y: y,
         text: text,
-        life: 100, // Время жизни в кадрах
-        velocityY: -2, // Движение вверх
+        life: 120,
+        velocityY: -3,
         opacity: 1,
         update: function() {
             this.y += this.velocityY;
             this.life--;
-            this.opacity = this.life / 100;
+            this.opacity = this.life / 120;
         },
         draw: function(ctx) {
             ctx.save();
             ctx.globalAlpha = this.opacity;
-            ctx.font = 'bold 16px "Press Start 2P", monospace';
+            ctx.font = 'bold 20px "Press Start 2P", monospace';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#FFD700';
             ctx.strokeStyle = '#D32F2F';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 4;
             
             // Тень
             ctx.strokeText(this.text, this.x, this.y);
@@ -601,11 +813,11 @@ function createParticles(x, y, count, color) {
         particles.push({
             x: x,
             y: y,
-            velocityX: (Math.random() - 0.5) * 8,
-            velocityY: (Math.random() - 0.5) * 8 - 2,
-            life: 30 + Math.random() * 30,
+            velocityX: (Math.random() - 0.5) * 12,
+            velocityY: (Math.random() - 0.5) * 12 - 3,
+            life: 40 + Math.random() * 40,
             color: color,
-            size: 3 + Math.random() * 5,
+            size: 4 + Math.random() * 6,
             update: function() {
                 this.x += this.velocityX;
                 this.y += this.velocityY;
@@ -614,7 +826,7 @@ function createParticles(x, y, count, color) {
                 this.size *= 0.95;
             },
             draw: function(ctx) {
-                ctx.globalAlpha = this.life / 60;
+                ctx.globalAlpha = this.life / 80;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
