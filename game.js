@@ -129,50 +129,19 @@ function createPixelSprite(width, height, color, design) {
     return spriteCanvas;
 }
 
+// Функция загрузки спрайтов
 function loadSprites() {
-    // Используем бесплатные спрайты из интернета
-    const spriteSources = {
-        player: 'https://i.imgur.com/2yQ6wQc.png', // Марио
-        ground: 'https://i.imgur.com/3Qq5m5N.png', // Земля
-        gift: 'https://i.imgur.com/5X4Q8v7.png',   // Монета
-        flag: 'https://i.imgur.com/8vJtZQ2.png',   // Флаг
-        cloud: 'https://i.imgur.com/9Q7JQY7.png',  // Облако
-        bush: 'https://i.imgur.com/4Q4qQ4q.png'    // Куст
-    };
+    // Создаем все спрайты программно
+    sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
+    sprites.ground = createPixelSprite(32, 32, '#8B4513', 'ground');
+    sprites.grass = createPixelSprite(32, 32, '#7CFC00', 'grass');
+    sprites.gift = createPixelSprite(30, 30, '#FF4081', 'gift');
+    sprites.flag = createPixelSprite(40, 150, '#FFD700', 'flag');
+    sprites.cloud = createPixelSprite(80, 40, '#FFFFFF', 'cloud');
+    sprites.bush = createPixelSprite(60, 40, '#228B22', 'bush');
+    sprites.pipe = createPixelSprite(60, 80, '#32CD32', 'pipe');
     
-    let loaded = 0;
-    const total = Object.keys(spriteSources).length;
-    
-    Object.keys(spriteSources).forEach(key => {
-        const img = new Image();
-        img.onload = () => {
-            sprites[key] = img;
-            loaded++;
-            loadingElement.textContent = `Загрузка спрайтов: ${loaded}/${total}`;
-            
-            if (loaded === total) {
-                loadingElement.style.display = 'none';
-                initGame();
-            }
-        };
-        img.onerror = () => {
-            // Если не загрузилось, создаем программный спрайт
-            console.warn(`Не удалось загрузить спрайт: ${key}`);
-            sprites[key] = createPixelSprite(
-                key === 'player' ? 40 : 32,
-                key === 'player' ? 60 : 32,
-                getDefaultColor(key),
-                key
-            );
-            loaded++;
-            if (loaded === total) {
-                loadingElement.style.display = 'none';
-                initGame();
-            }
-        };
-        img.src = spriteSources[key];
-    });
-}
+
     // НЕ используем внешнее изображение, чтобы избежать проблем с CORS
     // Симулируем загрузку и сразу запускаем игру
     loadingElement.textContent = "Игра загружается...";
