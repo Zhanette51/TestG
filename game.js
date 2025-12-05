@@ -9,29 +9,39 @@ function loadSprites() {
     sprites.bush = createPixelSprite(60, 40, '#228B22', 'bush');
     sprites.pipe = createPixelSprite(60, 80, '#32CD32', 'pipe');
     
-    // Загружаем изображение для игрока из URL
-    sprites.player = new Image();
-    sprites.player.src = 'https://i.pinimg.com/736x/3b/8c/2d/3b8c2d13ff3ff5afacc7d12c069187d0.jpg';
+    // Используем предзагруженное изображение из HTML
+    sprites.player = document.getElementById('mamaImage');
     
-    // Ждем загрузки изображения игрока
-    sprites.player.onload = function() {
-        loadingElement.textContent = "Спрайты созданы!";
+    // Проверяем, загружено ли изображение
+    if (sprites.player.complete) {
+        // Изображение уже загружено (из кэша)
         setTimeout(() => {
-            loadingElement.style.display = 'none';
-            initGame();
-        }, 1000);
-    };
-    
-    // На случай ошибки загрузки
-    sprites.player.onerror = function() {
-        // Создаем резервный спрайт
-        sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
-        loadingElement.textContent = "Спрайты созданы!";
-        setTimeout(() => {
-            loadingElement.style.display = 'none';
-            initGame();
-        }, 1000);
-    };
+            loadingElement.textContent = "Спрайты созданы!";
+            setTimeout(() => {
+                loadingElement.style.display = 'none';
+                initGame();
+            }, 1000);
+        }, 0);
+    } else {
+        // Ожидаем загрузки изображения
+        sprites.player.onload = function() {
+            loadingElement.textContent = "Спрайты созданы!";
+            setTimeout(() => {
+                loadingElement.style.display = 'none';
+                initGame();
+            }, 1000);
+        };
+        
+        sprites.player.onerror = function() {
+            // Если не удалось загрузить изображение, создаем резервный спрайт
+            sprites.player = createPixelSprite(40, 60, '#FF0000', 'player');
+            loadingElement.textContent = "Спрайты созданы!";
+            setTimeout(() => {
+                loadingElement.style.display = 'none';
+                initGame();
+            }, 1000);
+        };
+    }
 }
 
 // Добавим свойства для левитации платформ
