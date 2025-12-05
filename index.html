@@ -11,18 +11,16 @@
     <style>
         /* Скрываем изображения предзагрузки */
         #preload { display: none; }
-        /* Убираем полосы прокрутки */
-        body { overflow: hidden; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎉 С Юбилеем, Принцесса! 🎉</h1>
-        <p class="subtitle">Помоги Принцессе собрать все подарки к празднику!</p>
+        <h1>🎉 С Юбилеем! 🎉</h1>
+        <p class="subtitle">Помоги Маме-Марио собрать все подарки к празднику!</p>
         <p class="controls-info">Управление: <kbd>←</kbd> <kbd>→</kbd> - бег, <kbd>↑</kbd> - прыжок, <kbd>R</kbd> - перезапуск</p>
 
         <div class="game-wrapper">
-            <canvas id="gameCanvas" width="1200" height="600"></canvas>
+            <canvas id="gameCanvas" width="800" height="400"></canvas>
             <div id="message" class="message"></div>
             <div id="loading" class="loading">Загрузка игры...</div>
         </div>
@@ -47,7 +45,13 @@
 
     <!-- Предзагрузка изображений -->
     <div id="preload">
-        <img src="https://i.pinimg.com/736x/3b/8c/2d/3b8c2d13ff3ff5afacc7d12c069187d0.jpg" id="mamaImage">
+        <img src="images/mama.png" id="mamaSprite">
+        <img src="images/blocks.png" id="blockSprite">
+        <img src="images/gift.png" id="giftSprite">
+        <img src="images/flag.png" id="flagSprite">
+        <img src="images/cloud.png" id="cloudSprite">
+        <img src="images/bush.png" id="bushSprite">
+        <img src="images/pipe.png" id="pipeSprite">
     </div>
 
     <script src="game.js"></script>
